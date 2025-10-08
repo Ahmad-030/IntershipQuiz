@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 700px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .welcome-screen, .quiz-screen, .result-screen, .loading-screen, .error-screen {
+            display: none;
+        }
+
+        .welcome-screen.active, .quiz-screen.active, .result-screen.active, .loading-screen.active, .error-screen.active {
+            display: block;
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .question {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .question-number {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .question-text {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            background: white;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .option input[type="radio"] {
+            margin-right: 12px;
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .navigation button {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .progress {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .timer {
+            background: #ffc107;
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .timer.warning {
+            background: #dc3545;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .result-screen {
+            text-align: center;
+        }
+
+        .score {
+            font-size: 3em;
+            color: #667eea;
+            font-weight: bold;
+            margin: 30px 0;
+        }
+
+        .result-message {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .answer-review {
+            text-align: left;
+            margin-top: 30px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .answer-item {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .answer-item.correct {
+            border-left: 4px solid #28a745;
+        }
+
+        .answer-item.wrong {
+            border-left: 4px solid #dc3545;
+        }
+
+        .answer-status {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .answer-status.correct {
+            color: #28a745;
+        }
+
+        .answer-status.wrong {
+            color: #dc3545;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .submission-id {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .submission-id strong {
+            color: #667eea;
+        }
+
+        .quiz-info {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .quiz-info p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .warning-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .warning-overlay.active {
+            display: flex;
+        }
+
+        .warning-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 500px;
+            margin: 20px;
+        }
+
+        .warning-content h2 {
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+
+        .instructions-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .instructions-box h3 {
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .instructions-box ul {
+            color: #856404;
+            margin-left: 20px;
+            line-height: 1.8;
+            text-align: left;
+        }
+
+        .success-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .question-text {
+                font-size: 16px;
+            }
+
+            .score {
+                font-size: 2em;
+            }
+
+            .result-message {
+                font-size: 1.2em;
+            }
+
+            .navigation {
+                flex-direction: column;
+            }
+
+            .navigation button {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .timer {
+                font-size: 16px;
+            }
+
+            .option {
+                padding: 12px;
+            }
+
+            input[type="text"] {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.3em;
+                margin-bottom: 20px;
+            }
+
+            .question {
+                padding: 15px;
+            }
+
+            .question-text {
+                font-size: 15px;
+            }
+
+            .score {
+                font-size: 1.8em;
+            }
+
+            button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+
+            .warning-content {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="warning-overlay" id="warningOverlay">
+        <div class="warning-content" id="warningContent">
+            <h2>⚠️ Warning!</h2>
+            <p style="color: #666; margin-bottom: 20px;">Please don't switch tabs or leave this page during the quiz. Stay focused on completing your quiz.</p>
+            <button onclick="handleWarningResponse()">Return to Quiz</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="loading-screen active">
+            <h1>🎓 Loading Quiz...</h1>
+            <div class="spinner"></div>
+            <p style="text-align: center; color: #666;">Please wait while we load your quiz</p>
+        </div>
+
+        <div class="error-screen">
+            <h1>❌ Error</h1>
+            <div class="error-message" id="errorMessage">
+                Quiz not found or inactive.
+            </div>
+            <button onclick="window.location.reload()">🔄 Retry</button>
+        </div>
+
+        <div class="welcome-screen">
+            <h1 id="quizTitle">🎓 Quiz</h1>
+            <div class="quiz-info" id="quizInfo"></div>
+            <div class="instructions-box">
+                <h3>📋 Important Instructions:</h3>
+                <ul>
+                    <li>Do not switch tabs or minimize the browser window</li>
+                    <li>Do not leave the quiz page until you submit</li>
+                    <li>Tab switching is monitored and will be reported</li>
+                    <li>After 3 violations, your quiz will be auto-submitted</li>
+                    <li>Ensure a stable internet connection</li>
+                </ul>
+            </div>
+            <div class="input-group">
+                <label for="studentName">Enter Your Name:</label>
+                <input type="text" id="studentName" placeholder="Your full name" required>
+            </div>
+            <button onclick="startQuiz()">Start Quiz</button>
+        </div>
+
+        <div class="quiz-screen">
+            <h1 id="quizTitleHeader">Quiz</h1>
+            <div id="timerDisplay"></div>
+            <div class="progress">
+                <span id="currentQuestion">1</span> / <span id="totalQuestions">10</span>
+            </div>
+            <div id="quizContainer"></div>
+            <div class="navigation">
+                <button onclick="previousQuestion()" id="prevBtn" style="display: none;">Previous</button>
+                <button onclick="nextQuestion()" id="nextBtn">Next</button>
+            </div>
+        </div>
+
+        <div class="result-screen">
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, doc, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAMqVUsyH0EcZwT0JhygZz017wRYoI-i58",
+            authDomain: "dart-quiz-da952.firebaseapp.com",
+            projectId: "dart-quiz-da952",
+            storageBucket: "dart-quiz-da952.firebasestorage.app",
+            messagingSenderId: "286233764133",
+            appId: "1:286233764133:web:232a692de3245a1ed37acc"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.addDoc = addDoc;
+        window.collection = collection;
+        window.doc = doc;
+        window.getDoc = getDoc;
+        window.serverTimestamp = serverTimestamp;
+        window.firebaseReady = true;
+    </script>
+
+    <script>
+        let quizData = null;
+        let quizId = null;
+        let currentQuestionIndex = 0;
+        let studentName = "";
+        let answers = {};
+        let shuffledQuestions = [];
+        let timerInterval = null;
+        let totalTimeRemaining = 0;
+        let questionTimeRemaining = 0;
+        let quizInProgress = false;
+        let tabSwitchCount = 0;
+        let maxTabSwitches = 3;
+        let violationLogs = [];
+
+        window.addEventListener('beforeunload', (e) => {
+            if (quizInProgress) {
+                e.preventDefault();
+                e.returnValue = 'Are you sure you want to leave? Your quiz progress may be lost.';
+                return e.returnValue;
+            }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (quizInProgress && document.hidden) {
+                handleTabSwitch();
+            }
+        });
+
+        window.addEventListener('blur', () => {
+            if (quizInProgress) {
+                handleTabSwitch();
+            }
+        });
+
+        function handleTabSwitch() {
+            tabSwitchCount++;
+            const timestamp = new Date().toISOString();
+            violationLogs.push({
+                type: 'Tab Switch / Window Blur',
+                timestamp: timestamp,
+                attemptNumber: tabSwitchCount
+            });
+
+            document.getElementById('warningOverlay').classList.add('active');
+            
+            const warningContent = document.getElementById('warningContent');
+            warningContent.innerHTML = `
+                <h2>⚠️ Warning ${tabSwitchCount}/${maxTabSwitches}</h2>
+                <p style="color: #666; margin-bottom: 20px;">
+                    You switched tabs or left the quiz window. This has been logged.
+                    ${maxTabSwitches - tabSwitchCount > 0 
+                        ? `You have <strong>${maxTabSwitches - tabSwitchCount}</strong> warning(s) remaining.`
+                        : 'This was your final warning. Your quiz will be submitted automatically.'}
+                </p>
+                <p style="color: #dc3545; font-weight: bold; margin-bottom: 20px;">
+                    ${maxTabSwitches - tabSwitchCount > 0 
+                        ? 'Please stay focused on the quiz. Excessive violations will result in automatic submission.'
+                        : 'Quiz is being submitted due to multiple violations.'}
+                </p>
+                <button onclick="handleWarningResponse()">
+                    ${tabSwitchCount >= maxTabSwitches ? 'Submit Quiz' : 'Return to Quiz'}
+                </button>
+            `;
+
+            if (tabSwitchCount >= maxTabSwitches) {
+                setTimeout(() => {
+                    handleWarningResponse();
+                }, 2000);
+            }
+        }
+
+        function handleWarningResponse() {
+            document.getElementById('warningOverlay').classList.remove('active');
+            
+            if (tabSwitchCount >= maxTabSwitches) {
+                alert('Quiz submitted due to excessive tab switching violations.');
+                showResults();
+            }
+        }
+
+        window.addEventListener('load', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            quizId = urlParams.get('quizId');
+
+            if (!quizId) {
+                showError('No quiz ID provided in URL');
+                return;
+            }
+
+            await loadQuiz();
+        });
+
+        async function loadQuiz() {
+            try {
+                while (!window.firebaseReady) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                const docRef = window.doc(window.db, "quiz_configs", quizId);
+                const docSnap = await window.getDoc(docRef);
+
+                if (!docSnap.exists()) {
+                    showError('Quiz not found');
+                    return;
+                }
+
+                quizData = docSnap.data();
+
+                if (!quizData.isActive) {
+                    showError('This quiz is currently inactive');
+                    return;
+                }
+
+                document.querySelector('.loading-screen').classList.remove('active');
+                document.querySelector('.welcome-screen').classList.add('active');
+
+                document.getElementById('quizTitle').textContent = quizData.title;
+                document.getElementById('quizTitleHeader').textContent = quizData.title;
+
+                let infoHTML = `
+                    <p><strong>Total Questions:</strong> ${quizData.questions.length}</p>
+                    <p><strong>Passing Score:</strong> ${quizData.settings.passingPercentage}%</p>
+                `;
+
+                if (quizData.settings.totalQuizTime > 0) {
+                    infoHTML += `<p><strong>Time Limit:</strong> ${quizData.settings.totalQuizTime} minutes</p>`;
+                } else if (quizData.settings.timePerQuestion > 0) {
+                    infoHTML += `<p><strong>Time per Question:</strong> ${quizData.settings.timePerQuestion} seconds</p>`;
+                } else {
+                    infoHTML += `<p><strong>Time Limit:</strong> No limit</p>`;
+                }
+
+                document.getElementById('quizInfo').innerHTML = infoHTML;
+
+            } catch (error) {
+                console.error('Error loading quiz:', error);
+                showError('Error loading quiz: ' + error.message);
+            }
+        }
+
+        function showError(message) {
+            document.querySelector('.loading-screen').classList.remove('active');
+            document.querySelector('.error-screen').classList.add('active');
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function startQuiz() {
+            const nameInput = document.getElementById('studentName').value.trim();
+            if (nameInput === "") {
+                alert("Please enter your name!");
+                return;
+            }
+            studentName = nameInput;
+
+            quizInProgress = true;
+
+            if (quizData.settings.shuffleQuestions) {
+                shuffledQuestions = shuffleArray(quizData.questions);
+            } else {
+                shuffledQuestions = [...quizData.questions];
+            }
+
+            document.querySelector('.welcome-screen').classList.remove('active');
+            document.querySelector('.quiz-screen').classList.add('active');
+            document.getElementById('totalQuestions').textContent = shuffledQuestions.length;
+
+            if (quizData.settings.totalQuizTime > 0) {
+                totalTimeRemaining = quizData.settings.totalQuizTime * 60;
+                startTotalTimer();
+            }
+
+            displayQuestion();
+        }
+
+        function startTotalTimer() {
+            const timerDisplay = document.getElementById('timerDisplay');
+            timerDisplay.className = 'timer';
+            
+            timerInterval = setInterval(() => {
+                totalTimeRemaining--;
+                
+                const minutes = Math.floor(totalTimeRemaining / 60);
+                const seconds = totalTimeRemaining % 60;
+                timerDisplay.textContent = `⏱️ Time Remaining: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (totalTimeRemaining <= 60) {
+                    timerDisplay.classList.add('warning');
+                }
+                
+                if (totalTimeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    alert('Time is up!');
+                    showResults();
+                }
+            }, 1000);
+        }
+
+        function displayQuestion() {
+            const question = shuffledQuestions[currentQuestionIndex];
+            const quizContainer = document.getElementById('quizContainer');
+
+            let html = `
+                <div class="question">
+                    <div class="question-number">Question ${currentQuestionIndex + 1}</div>
+                    <div class="question-text">${question.question}</div>
+                    <div class="options">
+            `;
+
+            question.options.forEach((option, index) => {
+                const checked = answers[currentQuestionIndex] === index ? 'checked' : '';
+                html += `
+                    <label class="option">
+                        <input type="radio" name="question${currentQuestionIndex}" value="${index}" ${checked} onchange="saveAnswer(${index})">
+                        <span>${option}</span>
+                    </label>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            quizContainer.innerHTML = html;
+            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+
+            document.getElementById('prevBtn').style.display = currentQuestionIndex > 0 ? 'block' : 'none';
+            document.getElementById('nextBtn').textContent = currentQuestionIndex === shuffledQuestions.length - 1 ? 'Submit Quiz' : 'Next';
+        }
+
+        function saveAnswer(optionIndex) {
+            answers[currentQuestionIndex] = optionIndex;
+        }
+
+        function nextQuestion() {
+            if (answers[currentQuestionIndex] === undefined) {
+                alert("Please select an answer before proceeding!");
+                return;
+            }
+
+            if (currentQuestionIndex < shuffledQuestions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                displayQuestion();
+            }
+        }
+
+        async function showResults() {
+            quizInProgress = false;
+
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            let correctCount = 0;
+            let reviewHtml = '';
+            let detailedAnswers = [];
+
+            shuffledQuestions.forEach((question, index) => {
+                const userAnswer = answers[index];
+                const isCorrect = userAnswer === question.correct;
+                if (isCorrect) correctCount++;
+
+                detailedAnswers.push({
+                    questionNumber: index + 1,
+                    question: question.question,
+                    userAnswer: question.options[userAnswer] || 'Not answered',
+                    correctAnswer: question.options[question.correct],
+                    isCorrect: isCorrect
+                });
+
+                if (quizData.settings.allowReview && !quizData.settings.hideResults) {
+                    reviewHtml += `
+                        <div class="answer-item ${isCorrect ? 'correct' : 'wrong'}">
+                            <div class="answer-status ${isCorrect ? 'correct' : 'wrong'}">
+                                ${isCorrect ? '✓ Correct' : '✗ Wrong'}
+                            </div>
+                            <strong>Q${index + 1}:</strong> ${question.question}<br>
+                            <strong>Your answer:</strong> ${question.options[userAnswer] || 'Not answered'}<br>
+                            ${!isCorrect && quizData.settings.showCorrectAnswers ? `<strong>Correct answer:</strong> ${question.options[question.correct]}` : ''}
+                        </div>
+                    `;
+                }
+            });
+
+            const percentage = Math.round((correctCount / shuffledQuestions.length) * 100);
+            const passed = percentage >= quizData.settings.passingPercentage;
+
+            await saveToFirebase(correctCount, percentage, detailedAnswers, passed);
+
+            document.querySelector('.quiz-screen').classList.remove('active');
+            document.querySelector('.result-screen').classList.add('active');
+
+            const resultContent = document.getElementById('resultContent');
+            
+            if (quizData.settings.hideResults) {
+                resultContent.innerHTML = `
+                    <div class="success-icon">✅</div>
+                    <h1>Quiz Submitted Successfully!</h1>
+                    <h2>Thank you, ${studentName}!</h2>
+                    <p style="color: #666; margin-top: 20px; font-size: 18px;">Your quiz has been submitted and saved. Your teacher will review your results.</p>
+                    <div class="submission-id" id="submissionInfo">
+                        <div class="spinner"></div>
+                        <p>Saving your submission...</p>
+                    </div>
+                `;
+            } else {
+                let message = '';
+                if (percentage >= 90) message = "Excellent! Outstanding performance! 🌟";
+                else if (percentage >= 70) message = "Great job! Well done! 👍";
+                else if (percentage >= 50) message = "Good effort! Keep practicing! 💪";
+                else message = "Keep learning! You can do better! 📚";
+
+                if (passed) {
+                    message += ` You passed! 🎉`;
+                } else {
+                    message += ` You need ${quizData.settings.passingPercentage}% to pass.`;
+                }
+
+                resultContent.innerHTML = `
+                    <h1>Quiz Complete! 🎉</h1>
+                    <h2>Hello, ${studentName}!</h2>
+                    <div class="score">${correctCount} / ${shuffledQuestions.length}</div>
+                    <div class="result-message">${percentage}% - ${message}</div>
+                    <div class="submission-id" id="submissionInfo"></div>
+                    ${quizData.settings.allowReview ? `<div class="answer-review">${reviewHtml}</div>` : ''}
+                `;
+            }
+        }
+
+        async function saveToFirebase(correctCount, percentage, detailedAnswers, passed) {
+            try {
+                const submissionInfo = document.getElementById('submissionInfo');
+                if (submissionInfo) {
+                    submissionInfo.innerHTML = '<div class="spinner"></div><p>Saving your results...</p>';
+                }
+
+                const docRef = await window.addDoc(window.collection(window.db, "quiz_submissions"), {
+                    quizId: quizId,
+                    quizTitle: quizData.title,
+                    studentName: studentName,
+                    score: correctCount,
+                    totalQuestions: shuffledQuestions.length,
+                    percentage: percentage,
+                    passed: passed,
+                    answers: detailedAnswers,
+                    tabSwitchCount: tabSwitchCount,
+                    violationLogs: violationLogs,
+                    submittedAt: window.serverTimestamp(),
+                    date: new Date().toISOString()
+                });
+
+                let violationWarning = '';
+                if (tabSwitchCount > 0) {
+                    violationWarning = `<div style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                        <strong>⚠️ Note:</strong> ${tabSwitchCount} tab switch violation(s) were logged during this quiz.
+                    </div>`;
+                }
+
+                if (submissionInfo) {
+                    submissionInfo.innerHTML = `
+                        <strong>✅ Results saved successfully!</strong><br>
+                        Submission ID: <strong>${docRef.id}</strong><br>
+                        <small>Your teacher can view your results in the dashboard.</small>
+                        ${violationWarning}
+                    `;
+                }
+            } catch (error) {
+                console.error("Error saving to Firebase:", error);
+                const submissionInfo = document.getElementById('submissionInfo');
+                if (submissionInfo) {
+                    submissionInfo.innerHTML = `
+                        <div style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px;">
+                            <strong>❌ Error saving results:</strong><br>
+                            ${error.message}<br>
+                            <small>Please contact your teacher with this information.</small>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        window.handleWarningResponse = handleWarningResponse;
+        window.startQuiz = startQuiz;
+        window.nextQuestion = nextQuestion;
+        window.previousQuestion = previousQuestion;
+        window.saveAnswer = saveAnswer;
+    </script>
+</body>
+</html>

@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard - Quiz Results</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .refresh-btn {
+            background: #28a745;
+        }
+
+        .export-btn {
+            background: #17a2b8;
+        }
+
+        .quiz-section {
+            margin-bottom: 40px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .quiz-section-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .quiz-section-header:hover {
+            opacity: 0.9;
+        }
+
+        .quiz-section-header h2 {
+            margin: 0;
+            font-size: 1.3em;
+        }
+
+        .quiz-section-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+            flex-wrap: wrap;
+        }
+
+        .quiz-section-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .quiz-section-content.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .score-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .score-excellent {
+            background: #28a745;
+        }
+
+        .score-good {
+            background: #17a2b8;
+        }
+
+        .score-average {
+            background: #ffc107;
+        }
+
+        .score-poor {
+            background: #dc3545;
+        }
+
+        .view-details-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 5px;
+        }
+
+        .view-details-btn:hover {
+            background: #5568d3;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .duplicate-badge {
+            display: inline-block;
+            background: #ffc107;
+            color: #000;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 5px;
+            font-weight: bold;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .answer-detail {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        .answer-detail.correct {
+            border-left: 4px solid #28a745;
+        }
+
+        .answer-detail.wrong {
+            border-left: 4px solid #dc3545;
+        }
+
+        .answer-status {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .answer-status.correct {
+            color: #28a745;
+        }
+
+        .answer-status.wrong {
+            color: #dc3545;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .no-data-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .toggle-icon {
+            font-size: 1.2em;
+            transition: transform 0.3s;
+        }
+
+        .toggle-icon.rotated {
+            transform: rotate(180deg);
+        }
+
+        .delete-all-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+
+        .delete-all-btn:hover {
+            background: #c82333;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .quiz-section-stats {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Teacher Dashboard</h1>
+        <p class="subtitle">Quiz Results - Organized by Quiz</p>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Search by student name..." onkeyup="filterResults()">
+            </div>
+            <div class="filter-group">
+                <label>Filter by Score:</label>
+                <select id="scoreFilter" onchange="filterResults()">
+                    <option value="all">All Scores</option>
+                    <option value="excellent">Excellent (90-100%)</option>
+                    <option value="good">Good (70-89%)</option>
+                    <option value="average">Average (50-69%)</option>
+                    <option value="poor">Below 50%</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>View:</label>
+                <select id="uniqueFilter" onchange="filterResults()">
+                    <option value="latest">Latest Only (No Duplicates)</option>
+                    <option value="all">All Submissions</option>
+                </select>
+            </div>
+            <button class="refresh-btn" onclick="loadResults()">🔄 Refresh</button>
+            <button class="export-btn" onclick="exportToCSV()">📥 Export CSV</button>
+        </div>
+
+        <div id="loadingState" class="loading">
+            <div class="spinner"></div>
+            <p>Loading quiz results...</p>
+        </div>
+
+        <div id="quizSections"></div>
+
+        <div id="noDataState" class="no-data" style="display: none;">
+            <div class="no-data-icon">📭</div>
+            <h2>No Submissions Yet</h2>
+            <p>Student quiz results will appear here once they submit their quizzes.</p>
+        </div>
+    </div>
+
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📝 Detailed Results</h2>
+                <button class="close-btn" onclick="closeModal()">✕ Close</button>
+            </div>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAMqVUsyH0EcZwT0JhygZz017wRYoI-i58",
+            authDomain: "dart-quiz-da952.firebaseapp.com",
+            projectId: "dart-quiz-da952",
+            storageBucket: "dart-quiz-da952.firebasestorage.app",
+            messagingSenderId: "286233764133",
+            appId: "1:286233764133:web:232a692de3245a1ed37acc"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.getDocs = getDocs;
+        window.collection = collection;
+        window.query = query;
+        window.orderBy = orderBy;
+        window.deleteDoc = deleteDoc;
+        window.doc = doc;
+        window.firebaseReady = true;
+    </script>
+
+    <script>
+        let allResults = [];
+        let filteredResultsByQuiz = {};
+
+        window.addEventListener('load', () => {
+            loadResults();
+        });
+
+        async function loadResults() {
+            try {
+                document.getElementById('loadingState').style.display = 'block';
+                document.getElementById('quizSections').innerHTML = '';
+                document.getElementById('noDataState').style.display = 'none';
+
+                while (!window.firebaseReady) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                const q = window.query(
+                    window.collection(window.db, "quiz_submissions"),
+                    window.orderBy("submittedAt", "desc")
+                );
+                
+                const querySnapshot = await window.getDocs(q);
+                
+                allResults = [];
+                querySnapshot.forEach((doc) => {
+                    allResults.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                document.getElementById('loadingState').style.display = 'none';
+
+                if (allResults.length === 0) {
+                    document.getElementById('noDataState').style.display = 'block';
+                } else {
+                    filterResults();
+                }
+            } catch (error) {
+                console.error("Error loading results:", error);
+                document.getElementById('loadingState').innerHTML = `
+                    <p style="color: #dc3545;">❌ Error loading results: ${error.message}</p>
+                    <button onclick="loadResults()">Try Again</button>
+                `;
+            }
+        }
+
+        function filterResults() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const scoreFilter = document.getElementById('scoreFilter').value;
+            const uniqueFilter = document.getElementById('uniqueFilter').value;
+
+            let resultsToFilter = [...allResults];
+
+            if (uniqueFilter === 'latest') {
+                const latestByStudentAndQuiz = {};
+                resultsToFilter.forEach(result => {
+                    const key = `${result.quizTitle}_${result.studentName}`;
+                    const timestamp = result.submittedAt ? 
+                        result.submittedAt.seconds : 
+                        new Date(result.date).getTime() / 1000;
+                    
+                    if (!latestByStudentAndQuiz[key] || 
+                        timestamp > latestByStudentAndQuiz[key].timestamp) {
+                        latestByStudentAndQuiz[key] = {
+                            ...result,
+                            timestamp: timestamp
+                        };
+                    }
+                });
+                resultsToFilter = Object.values(latestByStudentAndQuiz);
+            }
+
+            resultsToFilter = resultsToFilter.filter(result => {
+                const matchesSearch = result.studentName.toLowerCase().includes(searchTerm);
+
+                let matchesScore = true;
+                if (scoreFilter !== 'all') {
+                    const percentage = result.percentage;
+                    switch(scoreFilter) {
+                        case 'excellent':
+                            matchesScore = percentage >= 90;
+                            break;
+                        case 'good':
+                            matchesScore = percentage >= 70 && percentage < 90;
+                            break;
+                        case 'average':
+                            matchesScore = percentage >= 50 && percentage < 70;
+                            break;
+                        case 'poor':
+                            matchesScore = percentage < 50;
+                            break;
+                    }
+                }
+
+                return matchesSearch && matchesScore;
+            });
+
+            filteredResultsByQuiz = {};
+            resultsToFilter.forEach(result => {
+                const quizTitle = result.quizTitle || 'Untitled Quiz';
+                if (!filteredResultsByQuiz[quizTitle]) {
+                    filteredResultsByQuiz[quizTitle] = [];
+                }
+                filteredResultsByQuiz[quizTitle].push(result);
+            });
+
+            Object.keys(filteredResultsByQuiz).forEach(quizTitle => {
+                filteredResultsByQuiz[quizTitle].sort((a, b) => {
+                    const timeA = a.submittedAt ? a.submittedAt.seconds : new Date(a.date).getTime() / 1000;
+                    const timeB = b.submittedAt ? b.submittedAt.seconds : new Date(b.date).getTime() / 1000;
+                    return timeB - timeA;
+                });
+            });
+
+            displayResults();
+        }
+
+        function displayResults() {
+            const container = document.getElementById('quizSections');
+            container.innerHTML = '';
+
+            const quizTitles = Object.keys(filteredResultsByQuiz).sort();
+
+            if (quizTitles.length === 0) {
+                container.innerHTML = '<div class="no-data"><p>No results match your search criteria.</p></div>';
+                return;
+            }
+
+            quizTitles.forEach((quizTitle, quizIndex) => {
+                const results = filteredResultsByQuiz[quizTitle];
+                const totalSubmissions = results.length;
+                const avgPercentage = results.reduce((sum, r) => sum + r.percentage, 0) / totalSubmissions;
+                const passCount = results.filter(r => r.percentage >= 70).length;
+                const passRate = (passCount / totalSubmissions) * 100;
+
+                const nameCounts = {};
+                results.forEach(result => {
+                    nameCounts[result.studentName] = (nameCounts[result.studentName] || 0) + 1;
+                });
+
+                const section = document.createElement('div');
+                section.className = 'quiz-section';
+                section.innerHTML = `
+                    <div class="quiz-section-header" onclick="toggleQuizSection(${quizIndex})">
+                        <div>
+                            <h2>${quizTitle}</h2>
+                            <div class="quiz-section-stats">
+                                <span>📝 ${totalSubmissions} submission(s)</span>
+                                <span>📊 Avg: ${Math.round(avgPercentage)}%</span>
+                                <span>✅ Pass Rate: ${Math.round(passRate)}%</span>
+                            </div>
+                        </div>
+                        <span class="toggle-icon" id="toggle-${quizIndex}">▼</span>
+                    </div>
+                    <div class="quiz-section-content active" id="content-${quizIndex}">
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value">${totalSubmissions}</div>
+                                <div class="stat-label">Total Submissions</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${Math.round(avgPercentage)}%</div>
+                                <div class="stat-label">Average Score</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${Math.round(passRate)}%</div>
+                                <div class="stat-label">Pass Rate (≥70%)</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${Math.max(...results.map(r => r.percentage))}%</div>
+                                <div class="stat-label">Highest Score</div>
+                            </div>
+                        </div>
+                        
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Student Name</th>
+                                        <th>Score</th>
+                                        <th>Percentage</th>
+                                        <th>Date & Time</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${results.map((result, index) => {
+                                        const percentage = result.percentage;
+                                        let scoreClass = 'score-poor';
+                                        if (percentage >= 90) scoreClass = 'score-excellent';
+                                        else if (percentage >= 70) scoreClass = 'score-good';
+                                        else if (percentage >= 50) scoreClass = 'score-average';
+
+                                        const date = result.submittedAt ? 
+                                            new Date(result.submittedAt.seconds * 1000).toLocaleString() : 
+                                            new Date(result.date).toLocaleString();
+
+                                        const isDuplicate = nameCounts[result.studentName] > 1;
+                                        const duplicateBadge = isDuplicate ? '<span class="duplicate-badge">Duplicate</span>' : '';
+
+                                        return `
+                                            <tr>
+                                                <td>${index + 1}</td>
+                                                <td><strong>${result.studentName}</strong>${duplicateBadge}</td>
+                                                <td>${result.score} / ${result.totalQuestions}</td>
+                                                <td><span class="score-badge ${scoreClass}">${percentage}%</span></td>
+                                                <td>${date}</td>
+                                                <td>
+                                                    <button class="view-details-btn" onclick="viewDetails('${result.id}')">
+                                                        👁️ View
+                                                    </button>
+                                                    <button class="delete-btn" onclick="deleteSubmission('${result.id}', '${result.studentName.replace(/'/g, "\\'")}')">
+                                                        🗑️ Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(section);
+            });
+        }
+
+        function toggleQuizSection(index) {
+            const content = document.getElementById(`content-${index}`);
+            const toggle = document.getElementById(`toggle-${index}`);
+            
+            content.classList.toggle('active');
+            toggle.classList.toggle('rotated');
+        }
+
+        async function deleteSubmission(resultId, studentName) {
+            if (!confirm(`Are you sure you want to delete the submission from "${studentName}"?\n\nThis action cannot be undone!`)) {
+                return;
+            }
+
+            try {
+                const button = event.target;
+                button.disabled = true;
+                button.textContent = 'Deleting...';
+
+                await window.deleteDoc(window.doc(window.db, "quiz_submissions", resultId));
+
+                allResults = allResults.filter(r => r.id !== resultId);
+                
+                filterResults();
+
+                alert('Submission deleted successfully!');
+            } catch (error) {
+                console.error("Error deleting submission:", error);
+                alert('Error deleting submission: ' + error.message);
+                loadResults();
+            }
+        }
+
+        function viewDetails(resultId) {
+            const result = allResults.find(r => r.id === resultId);
+            if (!result) return;
+
+            let modalHTML = `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h3>${result.studentName}</h3>
+                    <p><strong>Quiz:</strong> ${result.quizTitle}</p>
+                    <p><strong>Score:</strong> ${result.score} / ${result.totalQuestions} (${result.percentage}%)</p>
+                    <p><strong>Submitted:</strong> ${result.submittedAt ? new Date(result.submittedAt.seconds * 1000).toLocaleString() : new Date(result.date).toLocaleString()}</p>
+                    ${result.tabSwitchCount > 0 ? `<p style="color: #dc3545;"><strong>⚠️ Tab Switch Violations:</strong> ${result.tabSwitchCount}</p>` : ''}
+                    <p><strong>Submission ID:</strong> ${result.id}</p>
+                </div>
+                <h3 style="margin-bottom: 15px;">Answer Details:</h3>
+            `;
+
+            result.answers.forEach(answer => {
+                const correctLabel = answer.isCorrect ? '✅ Correct' : '❌ Wrong';
+                const answerClass = answer.isCorrect ? 'correct' : 'wrong';
+                
+                modalHTML += `
+                    <div class="answer-detail ${answerClass}">
+                        <div class="answer-status ${answerClass}">
+                            Question ${answer.questionNumber}: ${correctLabel}
+                        </div>
+                        <p><strong>Question:</strong> ${answer.questionText}</p>
+                        <p><strong>Student's Answer:</strong> ${answer.userAnswer}</p>
+                        ${!answer.isCorrect ? `<p><strong>Correct Answer:</strong> ${answer.correctAnswer}</p>` : ''}
+                    </div>
+                `;
+            });
+
+            document.getElementById('modalContent').innerHTML = modalHTML;
+            document.getElementById('detailModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+
+        function exportToCSV() {
+            if (allResults.length === 0) {
+                alert('No data to export!');
+                return;
+            }
+
+            let csv = 'Quiz Title,Student Name,Score,Total Questions,Percentage,Date & Time,Tab Switches,Submission ID\n';
+
+            allResults.forEach(result => {
+                const date = result.submittedAt ? 
+                    new Date(result.submittedAt.seconds * 1000).toLocaleString() : 
+                    new Date(result.date).toLocaleString();
+                
+                const row = [
+                    `"${result.quizTitle || 'Untitled Quiz'}"`,
+                    `"${result.studentName}"`,
+                    result.score,
+                    result.totalQuestions,
+                    result.percentage,
+                    `"${date}"`,
+                    result.tabSwitchCount || 0,
+                    result.id
+                ].join(',');
+                
+                csv += row + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `quiz_results_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        document.getElementById('detailModal').addEventListener('click', (e) => {
+            if (e.target.id === 'detailModal') {
+                closeModal();
+            }
+        });
+
+        window.loadResults = loadResults;
+        window.filterResults = filterResults;
+        window.viewDetails = viewDetails;
+        window.closeModal = closeModal;
+        window.deleteSubmission = deleteSubmission;
+        window.exportToCSV = exportToCSV;
+        window.toggleQuizSection = toggleQuizSection;
+    </script>
+</body>
+</html>

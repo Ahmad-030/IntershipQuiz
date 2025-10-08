@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Quiz Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 16px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+        .question-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .question-card h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .option-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .option-input input[type="text"] {
+            flex: 1;
+        }
+
+        .option-input input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .quiz-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .quiz-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .quiz-item h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .quiz-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .quiz-link {
+            background: #e8f4f8;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 14px;
+            word-break: break-all;
+        }
+
+        .quiz-link strong {
+            color: #667eea;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .bulk-import {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 2px dashed #667eea;
+        }
+
+        .bulk-import h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .bulk-import textarea {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .import-help {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #856404;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .subtitle {
+                font-size: 0.9em;
+            }
+
+            .tabs {
+                gap: 5px;
+            }
+
+            .tab {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quiz-actions {
+                flex-direction: column;
+            }
+
+            .quiz-actions button {
+                width: 100%;
+            }
+
+            button {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .option-input {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .option-input input[type="text"] {
+                width: 100%;
+            }
+
+            input[type="text"],
+            input[type="number"],
+            textarea,
+            select {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.3em;
+            }
+
+            .tab {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .question-card {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Teacher Quiz Manager</h1>
+        <p class="subtitle">Create and manage quizzes dynamically</p>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('create')">➕ Create New Quiz</button>
+            <button class="tab" onclick="switchTab('manage')">📋 Manage Quizzes</button>
+        </div>
+
+        <div id="createTab" class="tab-content active">
+            <h2 style="margin-bottom: 20px;">Create New Quiz</h2>
+            
+            <div class="form-group">
+                <label>Quiz Title *</label>
+                <input type="text" id="quizTitle" placeholder="e.g., Dart Classes Quiz - Chapter 5">
+            </div>
+
+            <div class="settings-grid">
+                <div class="form-group">
+                    <label>Time per Question (seconds)</label>
+                    <input type="number" id="timePerQuestion" value="0" min="0" placeholder="0 = No timer">
+                    <small style="color: #666;">Set to 0 for no time limit</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Total Quiz Time (minutes)</label>
+                    <input type="number" id="totalQuizTime" value="0" min="0" placeholder="0 = No timer">
+                    <small style="color: #666;">Set to 0 for no time limit</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Passing Percentage (%)</label>
+                    <input type="number" id="passingPercentage" value="70" min="0" max="100">
+                </div>
+            </div>
+
+            <div class="settings-grid" style="margin-bottom: 20px;">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="shuffleQuestions" checked>
+                    <label for="shuffleQuestions" style="margin: 0;">Shuffle Questions</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="showCorrectAnswers" checked>
+                    <label for="showCorrectAnswers" style="margin: 0;">Show Correct Answers After Submit</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="allowReview" checked>
+                    <label for="allowReview" style="margin: 0;">Allow Review of Answers</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="hideResults">
+                    <label for="hideResults" style="margin: 0;">Hide Results (Only show "Quiz Submitted")</label>
+                </div>
+            </div>
+
+            <div class="bulk-import">
+                <h3>📥 Quick Import Questions (Optional)</h3>
+                <p style="margin-bottom: 10px; color: #666;">Paste multiple questions in the format below, then click "Import Questions"</p>
+                
+                <div class="import-help">
+                    <strong>Format Example:</strong><br>
+                    <code style="display: block; margin-top: 5px; white-space: pre-wrap;">
+{
+    question: "What is late initialization in Dart?",
+    options: ["Declares non-nullable variable that's initialized later", "Delays program execution", "Creates lazy objects", "Only for static variables"],
+    correct: 0
+},
+{
+    question: "What is the purpose of super keyword?",
+    options: ["Access parent class members and constructor", "Create super objects", "Define abstract methods", "Implement interfaces"],
+    correct: 0
+}</code>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Paste Questions Here:</label>
+                    <textarea id="bulkQuestions" placeholder="Paste your questions in the format shown above..." rows="10"></textarea>
+                </div>
+
+                <button onclick="importBulkQuestions()" class="btn-success">📥 Import Questions</button>
+                <button onclick="clearBulkImport()" class="btn-danger" style="margin-left: 10px;">🗑️ Clear Import</button>
+            </div>
+
+            <h3 style="margin: 30px 0 20px;">Questions (Or Add Manually Below)</h3>
+            <div id="questionsContainer"></div>
+
+            <button onclick="addQuestion()" class="btn-success">➕ Add Question Manually</button>
+            <button onclick="saveQuiz()" style="margin-left: 10px;">💾 Save & Generate Quiz</button>
+        </div>
+
+        <div id="manageTab" class="tab-content">
+            <h2 style="margin-bottom: 20px;">Your Quizzes</h2>
+            <div id="loadingQuizzes" style="text-align: center; padding: 40px;">
+                <div class="spinner"></div>
+                <p>Loading quizzes...</p>
+            </div>
+            <div id="quizzesList" class="quiz-list"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, where, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAMqVUsyH0EcZwT0JhygZz017wRYoI-i58",
+            authDomain: "dart-quiz-da952.firebaseapp.com",
+            projectId: "dart-quiz-da952",
+            storageBucket: "dart-quiz-da952.firebasestorage.app",
+            messagingSenderId: "286233764133",
+            appId: "1:286233764133:web:232a692de3245a1ed37acc"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.addDoc = addDoc;
+        window.getDocs = getDocs;
+        window.collection = collection;
+        window.query = query;
+        window.orderBy = orderBy;
+        window.deleteDoc = deleteDoc;
+        window.doc = doc;
+        window.where = where;
+        window.updateDoc = updateDoc;
+        window.firebaseReady = true;
+    </script>
+
+    <script>
+        let questionCount = 0;
+        let allQuizzes = [];
+        let importedQuestions = [];
+
+        window.addEventListener('load', () => {
+            loadQuizzes();
+        });
+
+        function importBulkQuestions() {
+            const bulkText = document.getElementById('bulkQuestions').value.trim();
+            
+            if (!bulkText) {
+                alert('Please paste questions to import!');
+                return;
+            }
+
+            try {
+                let jsonText = bulkText;
+                if (!jsonText.trim().startsWith('[')) {
+                    jsonText = '[' + jsonText + ']';
+                }
+                
+                jsonText = jsonText.replace(/,\s*\]/, ']');
+                
+                const questions = eval('(' + jsonText + ')');
+                
+                if (!Array.isArray(questions)) {
+                    throw new Error('Invalid format - must be an array of questions');
+                }
+
+                questions.forEach((q, index) => {
+                    if (!q.question || !q.options || !Array.isArray(q.options) || q.options.length < 2) {
+                        throw new Error(`Question ${index + 1} is invalid - must have question text and at least 2 options`);
+                    }
+                    if (typeof q.correct !== 'number' || q.correct < 0 || q.correct >= q.options.length) {
+                        throw new Error(`Question ${index + 1} has invalid correct answer index`);
+                    }
+                });
+
+                importedQuestions = questions;
+                document.getElementById('questionsContainer').innerHTML = '';
+                questionCount = 0;
+
+                questions.forEach(q => {
+                    addImportedQuestion(q);
+                });
+
+                alert(`✅ Successfully imported ${questions.length} question(s)!`);
+                document.getElementById('bulkQuestions').value = '';
+
+            } catch (error) {
+                console.error('Import error:', error);
+                alert('❌ Error importing questions:\n\n' + error.message + '\n\nPlease check the format and try again.');
+            }
+        }
+
+        function addImportedQuestion(questionData) {
+            questionCount++;
+            const container = document.getElementById('questionsContainer');
+            
+            const questionCard = document.createElement('div');
+            questionCard.className = 'question-card';
+            questionCard.id = `question-${questionCount}`;
+            
+            let optionsHTML = '';
+            questionData.options.forEach((option, index) => {
+                const isCorrect = index === questionData.correct ? 'checked' : '';
+                optionsHTML += `
+                    <div class="option-input">
+                        <input type="radio" name="q${questionCount}-correct" value="${index}" ${isCorrect}>
+                        <input type="text" id="q${questionCount}-opt${index}" placeholder="Option ${index + 1}" value="${option}">
+                    </div>
+                `;
+            });
+
+            questionCard.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h4>Question ${questionCount}</h4>
+                    <button onclick="removeQuestion(${questionCount})" class="btn-danger" style="padding: 6px 12px; width: auto;">🗑️ Remove</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Question Text *</label>
+                    <textarea id="q${questionCount}-text" placeholder="Enter your question here...">${questionData.question}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Options (Select the correct answer) *</label>
+                    ${optionsHTML}
+                </div>
+            `;
+            
+            container.appendChild(questionCard);
+        }
+
+        function clearBulkImport() {
+            document.getElementById('bulkQuestions').value = '';
+            document.getElementById('questionsContainer').innerHTML = '';
+            questionCount = 0;
+            importedQuestions = [];
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+
+            if (tabName === 'manage') {
+                loadQuizzes();
+            }
+        }
+
+        function addQuestion() {
+            questionCount++;
+            const container = document.getElementById('questionsContainer');
+            
+            const questionCard = document.createElement('div');
+            questionCard.className = 'question-card';
+            questionCard.id = `question-${questionCount}`;
+            questionCard.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h4>Question ${questionCount}</h4>
+                    <button onclick="removeQuestion(${questionCount})" class="btn-danger" style="padding: 6px 12px; width: auto;">🗑️ Remove</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Question Text *</label>
+                    <textarea id="q${questionCount}-text" placeholder="Enter your question here..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Options (Select the correct answer) *</label>
+                    <div id="q${questionCount}-options">
+                        <div class="option-input">
+                            <input type="radio" name="q${questionCount}-correct" value="0">
+                            <input type="text" id="q${questionCount}-opt0" placeholder="Option 1">
+                        </div>
+                        <div class="option-input">
+                            <input type="radio" name="q${questionCount}-correct" value="1">
+                            <input type="text" id="q${questionCount}-opt1" placeholder="Option 2">
+                        </div>
+                        <div class="option-input">
+                            <input type="radio" name="q${questionCount}-correct" value="2">
+                            <input type="text" id="q${questionCount}-opt2" placeholder="Option 3">
+                        </div>
+                        <div class="option-input">
+                            <input type="radio" name="q${questionCount}-correct" value="3">
+                            <input type="text" id="q${questionCount}-opt3" placeholder="Option 4">
+                        </div>
+                    </div>
+                    <button onclick="addOption(${questionCount})" style="margin-top: 10px; padding: 6px 12px; font-size: 14px; width: auto;" class="btn-info">+ Add More Options</button>
+                </div>
+            `;
+            
+            container.appendChild(questionCard);
+        }
+
+        function addOption(questionId) {
+            const optionsContainer = document.getElementById(`q${questionId}-options`);
+            const currentOptions = optionsContainer.querySelectorAll('.option-input').length;
+            const newOptionIndex = currentOptions;
+
+            const newOption = document.createElement('div');
+            newOption.className = 'option-input';
+            newOption.innerHTML = `
+                <input type="radio" name="q${questionId}-correct" value="${newOptionIndex}">
+                <input type="text" id="q${questionId}-opt${newOptionIndex}" placeholder="Option ${newOptionIndex + 1}">
+            `;
+            optionsContainer.appendChild(newOption);
+        }
+
+        function removeQuestion(id) {
+            const element = document.getElementById(`question-${id}`);
+            if (element) {
+                element.remove();
+            }
+        }
+
+        async function saveQuiz() {
+            const title = document.getElementById('quizTitle').value.trim();
+            if (!title) {
+                alert('Please enter a quiz title!');
+                return;
+            }
+
+            const questions = [];
+            const questionCards = document.querySelectorAll('.question-card');
+            
+            if (questionCards.length === 0) {
+                alert('Please add at least one question!');
+                return;
+            }
+
+            for (let card of questionCards) {
+                const id = card.id.split('-')[1];
+                const questionText = document.getElementById(`q${id}-text`).value.trim();
+                
+                if (!questionText) {
+                    alert(`Please fill in question ${id}!`);
+                    return;
+                }
+
+                const options = [];
+                const optionsContainer = document.getElementById(`q${id}-options`) || card.querySelector('.form-group:last-child');
+                const optionInputs = optionsContainer ? optionsContainer.querySelectorAll('.option-input input[type="text"]') : card.querySelectorAll('.option-input input[type="text"]');
+                
+                for (let optInput of optionInputs) {
+                    const optionText = optInput.value.trim();
+                    if (!optionText) {
+                        alert(`Please fill in all options for question ${id}!`);
+                        return;
+                    }
+                    options.push(optionText);
+                }
+
+                if (options.length < 2) {
+                    alert(`Question ${id} must have at least 2 options!`);
+                    return;
+                }
+
+                const correctAnswer = document.querySelector(`input[name="q${id}-correct"]:checked`);
+                if (!correctAnswer) {
+                    alert(`Please select the correct answer for question ${id}!`);
+                    return;
+                }
+
+                questions.push({
+                    question: questionText,
+                    options: options,
+                    correct: parseInt(correctAnswer.value)
+                });
+            }
+
+            const quizData = {
+                title: title,
+                questions: questions,
+                settings: {
+                    timePerQuestion: parseInt(document.getElementById('timePerQuestion').value) || 0,
+                    totalQuizTime: parseInt(document.getElementById('totalQuizTime').value) || 0,
+                    passingPercentage: parseInt(document.getElementById('passingPercentage').value) || 70,
+                    shuffleQuestions: document.getElementById('shuffleQuestions').checked,
+                    showCorrectAnswers: document.getElementById('showCorrectAnswers').checked,
+                    allowReview: document.getElementById('allowReview').checked,
+                    hideResults: document.getElementById('hideResults').checked
+                },
+                createdAt: new Date().toISOString(),
+                isActive: true
+            };
+
+            try {
+                while (!window.firebaseReady) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                const docRef = await window.addDoc(window.collection(window.db, "quiz_configs"), quizData);
+                
+                const baseUrl = window.location.origin;
+                const quizLink = `${baseUrl}/student-quiz.html?quizId=${docRef.id}`;
+                
+                const linkDisplay = document.createElement('div');
+                linkDisplay.innerHTML = `
+                    <div style="background: #d4edda; padding: 20px; border-radius: 10px; border: 2px solid #28a745; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; max-width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                        <h3 style="color: #155724; margin-bottom: 15px;">✅ Quiz Created Successfully!</h3>
+                        <p><strong>Quiz ID:</strong> ${docRef.id}</p>
+                        <p><strong>Questions:</strong> ${questions.length}</p>
+                        <p style="margin-top: 15px;"><strong>Student Link:</strong></p>
+                        <div style="background: white; padding: 10px; border-radius: 5px; word-break: break-all; margin: 10px 0;">
+                            <code style="color: #667eea;">${quizLink}</code>
+                        </div>
+                        <button onclick="navigator.clipboard.writeText('${quizLink}').then(() => alert('Link copied!'))" 
+                                style="background: #667eea; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px; width: auto;">
+                            📋 Copy Link
+                        </button>
+                        <button onclick="this.parentElement.remove()" 
+                                style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px; width: auto;">
+                            Close
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(linkDisplay);
+                
+                document.getElementById('quizTitle').value = '';
+                document.getElementById('questionsContainer').innerHTML = '';
+                document.getElementById('bulkQuestions').value = '';
+                questionCount = 0;
+                importedQuestions = [];
+                
+                document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('manageTab').classList.add('active');
+                loadQuizzes();
+                
+            } catch (error) {
+                console.error("Error saving quiz:", error);
+                alert('Error saving quiz: ' + error.message);
+            }
+        }
+
+        async function loadQuizzes() {
+            try {
+                document.getElementById('loadingQuizzes').style.display = 'block';
+                document.getElementById('quizzesList').innerHTML = '';
+
+                while (!window.firebaseReady) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                const q = window.query(
+                    window.collection(window.db, "quiz_configs"),
+                    window.orderBy("createdAt", "desc")
+                );
+                
+                const querySnapshot = await window.getDocs(q);
+                allQuizzes = [];
+                
+                querySnapshot.forEach((doc) => {
+                    allQuizzes.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                document.getElementById('loadingQuizzes').style.display = 'none';
+
+                if (allQuizzes.length === 0) {
+                    document.getElementById('quizzesList').innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">No quizzes created yet. Create your first quiz!</p>';
+                    return;
+                }
+
+                displayQuizzes();
+                
+            } catch (error) {
+                console.error("Error loading quizzes:", error);
+                document.getElementById('loadingQuizzes').innerHTML = `<p style="color: #dc3545;">Error: ${error.message}</p>`;
+            }
+        }
+
+        function displayQuizzes() {
+            const container = document.getElementById('quizzesList');
+            container.innerHTML = '';
+
+            allQuizzes.forEach(quiz => {
+                const quizLink = `student-quiz.html?quizId=${quiz.id}`;
+                const statusBadge = quiz.isActive ? 
+                    '<span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Active</span>' : 
+                    '<span style="background: #dc3545; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">Inactive</span>';
+
+                const hideResultsBadge = quiz.settings?.hideResults ? 
+                    '<span style="background: #ffc107; color: #000; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-left: 5px;">Results Hidden</span>' : '';
+
+                const quizItem = document.createElement('div');
+                quizItem.className = 'quiz-item';
+                quizItem.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 10px;">
+                        <h3>${quiz.title}</h3>
+                        <div>
+                            ${statusBadge}
+                            ${hideResultsBadge}
+                        </div>
+                    </div>
+                    <p><strong>Questions:</strong> ${quiz.questions.length}</p>
+                    <p><strong>Created:</strong> ${new Date(quiz.createdAt).toLocaleString()}</p>
+                    <p><strong>Time Limit:</strong> ${quiz.settings.timePerQuestion > 0 ? `${quiz.settings.timePerQuestion}s per question` : quiz.settings.totalQuizTime > 0 ? `${quiz.settings.totalQuizTime} minutes total` : 'No limit'}</p>
+                    <p><strong>Passing Score:</strong> ${quiz.settings.passingPercentage}%</p>
+                    
+                    <div class="quiz-link">
+                        <strong>Student Link:</strong> <a href="${quizLink}" target="_blank">${quizLink}</a>
+                        <button onclick="copyToClipboard('${quizLink}')" style="margin-left: 10px; padding: 4px 8px; font-size: 12px; width: auto;">📋 Copy</button>
+                    </div>
+
+                    <div class="quiz-actions">
+                        <button onclick="toggleQuizStatus('${quiz.id}', ${quiz.isActive})" class="btn-info">
+                            ${quiz.isActive ? '🔒 Deactivate' : '🔓 Activate'}
+                        </button>
+                        <button onclick="deleteQuiz('${quiz.id}')" class="btn-danger">🗑️ Delete</button>
+                    </div>
+                `;
+                container.appendChild(quizItem);
+            });
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Link copied to clipboard!');
+            }).catch(err => {
+                alert('Failed to copy: ' + err);
+            });
+        }
+
+        async function toggleQuizStatus(quizId, currentStatus) {
+            try {
+                await window.updateDoc(window.doc(window.db, "quiz_configs", quizId), {
+                    isActive: !currentStatus
+                });
+                alert(currentStatus ? 'Quiz deactivated!' : 'Quiz activated!');
+                loadQuizzes();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+
+        async function deleteQuiz(quizId) {
+            if (!confirm('Are you sure you want to delete this quiz? This action cannot be undone!')) {
+                return;
+            }
+
+            try {
+                await window.deleteDoc(window.doc(window.db, "quiz_configs", quizId));
+                alert('Quiz deleted successfully!');
+                loadQuizzes();
+            } catch (error) {
+                alert('Error deleting quiz: ' + error.message);
+            }
+        }
+
+        window.switchTab = switchTab;
+        window.addQuestion = addQuestion;
+        window.addOption = addOption;
+        window.removeQuestion = removeQuestion;
+        window.saveQuiz = saveQuiz;
+        window.importBulkQuestions = importBulkQuestions;
+        window.clearBulkImport = clearBulkImport;
+        window.copyToClipboard = copyToClipboard;
+        window.toggleQuizStatus = toggleQuizStatus;
+        window.deleteQuiz = deleteQuiz;
+    </script>
+</body>
+</html>
